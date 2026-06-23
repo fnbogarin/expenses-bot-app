@@ -61,61 +61,59 @@ npm run dev
 - Frontend dev server: `http://localhost:5173`
 - Frontend production path: `/web/`
 
-## Arquitectura y comunicación
+## Architecture and communication
 
 ```mermaid
 flowchart LR
-  subgraph Messaging[Mensajería]
-    TelegramUser[Usuario de Telegram] <-->|mensajes y comandos| Telegram[Telegram Bot API]
+  subgraph Messaging[Messaging]
+    TelegramUser[Telegram user] <-->|messages and commands| Telegram[Telegram Bot API]
   end
 
-  subgraph UI[Interfaz web]
-    Browser[Navegador] -->|GET /web/| Nginx[Nginx: frontend]
-    Browser -->|solicitudes /v1| Nginx
+  subgraph UI[Web UI]
+    Browser[Browser] -->|GET /web/| Nginx[Nginx: frontend]
+    Browser -->|/v1 requests| Nginx
   end
 
   Telegram <-->|long polling| Backend[Backend Node.js<br/>Express + Telegraf]
   Nginx -->|proxy /v1| Backend
   Backend <-->|Mongoose| Mongo[(MongoDB)]
-  Backend -->|consulta de cotización| Dolarito[Dolarito]
+  Backend -->|exchange-rate lookup| Dolarito[Dolarito]
 ```
 
-### Mensajería por Telegram
+### Telegram messaging
 
-El backend consulta actualizaciones mediante *long polling*. Antes de procesar
-cualquier mensaje valida que el usuario esté incluido en
-`TELEGRAM_ALLOWED_USER_IDS`.
+The backend retrieves updates through *long polling*. Before processing a
+message, it checks that the user is listed in `TELEGRAM_ALLOWED_USER_IDS`.
 
-Comandos disponibles: `/start`, `/help`, `/expenses`, `/top`,
-`/totalbyday`, `/totalbymonth`, `/totalbymonthtousd`, `/totalbyyear` y
-`/getfeesbymonth`. Los mensajes de texto también se procesan como gastos.
+Available commands: `/start`, `/help`, `/expenses`, `/top`, `/totalbyday`,
+`/totalbymonth`, `/totalbymonthtousd`, `/totalbyyear`, and
+`/getfeesbymonth`. Plain text messages are also processed as expenses.
 
-### UI web
+### Web UI
 
-En Docker, Nginx publica la aplicación en `/web/` y reenvía las solicitudes
-`/v1/` al backend. En desarrollo, Vite sirve la UI en el puerto `5173` y hace
-el mismo proxy hacia `http://localhost:3000`.
+In Docker, Nginx serves the application at `/web/` and proxies `/v1/` requests
+to the backend. During development, Vite serves the UI on port `5173` and
+proxies the same requests to `http://localhost:3000`.
 
-### Endpoints HTTP expuestos
+### Exposed HTTP endpoints
 
-| Método | Ruta | Descripción |
+| Method | Route | Description |
 | --- | --- | --- |
-| `GET` | `/health` | Estado del proceso (`{ "status": "ok" }`). |
-| `OPTIONS` | `/v1/*` | Respuesta CORS para la API. |
-| `POST` | `/v1/expenses` | Crea un gasto desde la UI. |
-| `PATCH` | `/v1/expenses/:expenseId` | Actualiza un gasto existente. |
-| `GET` | `/v1/expenses/recent` | Lista gastos recientes; admite `chatId`, `search`, `startDate`, `endDate` y `limit`. |
-| `GET` | `/v1/expenses/summary/month` | Totales por moneda y cantidad para el período filtrado. |
-| `GET` | `/v1/expenses/analytics/categories` | Distribución de gastos por categoría. |
-| `GET` | `/v1/dollar/cripto` | Cotización vendedora de dólar cripto, obtenida de Dolarito. |
+| `GET` | `/health` | Process status (`{ "status": "ok" }`). |
+| `OPTIONS` | `/v1/*` | CORS preflight response for the API. |
+| `POST` | `/v1/expenses` | Creates an expense from the UI. |
+| `PATCH` | `/v1/expenses/:expenseId` | Updates an existing expense. |
+| `GET` | `/v1/expenses/recent` | Lists recent expenses; accepts `chatId`, `search`, `startDate`, `endDate`, and `limit`. |
+| `GET` | `/v1/expenses/summary/month` | Returns currency totals and expense count for the filtered period. |
+| `GET` | `/v1/expenses/analytics/categories` | Returns expense distribution by category. |
+| `GET` | `/v1/dollar/cripto` | Returns the crypto-dollar selling rate fetched from Dolarito. |
 
-`startDate` es inclusivo y `endDate` exclusivo. Si no se indican fechas, los
-endpoints de consultas usan el mes actual. `limit` se limita a un máximo de
-100.
+`startDate` is inclusive and `endDate` is exclusive. When dates are omitted,
+query endpoints use the current month. `limit` is capped at 100.
 
-> Nota: la UI contiene una llamada `DELETE /v1/expenses/:expenseId`, pero ese
-> endpoint todavía no está expuesto por el backend. La tabla refleja las rutas
-> realmente implementadas.
+> Note: the UI contains a `DELETE /v1/expenses/:expenseId` call, but the
+> backend does not expose that endpoint yet. The table reflects the routes that
+> are actually implemented.
 
 ## Full local stack
 
