@@ -1,0 +1,6 @@
+[submodule "web-react-expenses"]
+	path = web-react-expenses
+	url = https://github.com/fnbogarin/web-react-expenses.git
+[submodule "backend-node-expenses"]
+	path = backend-node-expenses
+	url = https://github.com/fnbogarin/backend-node-expenses.git
