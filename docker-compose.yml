@@ -19,7 +19,7 @@ services:
     build:
       context: ./web-react-expenses
       args:
-        VITE_API_BASE_URL: http://localhost:3000/v1
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:3000/v1}
     container_name: expense-bot-web
     ports:
       - "8080:80"
