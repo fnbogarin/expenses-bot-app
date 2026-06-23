@@ -1,0 +1,11 @@
+backend-node-expenses/
+web-react-expenses/
+backups/
+.env
+.env.*
+!.env.example
+
+backups/
+
+.DS_Store
+Thumbs.db
